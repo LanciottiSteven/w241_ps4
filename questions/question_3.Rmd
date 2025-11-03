@@ -12,87 +12,151 @@ summary_table <- data.table(
   'Turnout'    = c(.3008, .3890, .3160, .3002, .3145)
 )
 
-kable(summary_table)
+kable(summary_table)                      
 ``` 
 
 ## Make data
 Construct a data set that would reproduce the table. (Too frequently we receive data that has been summarized up to a level that is not useful for our analysis. Here, we're asking you to "un-summarize" the data to conduct the rest of the analysis for this question.)
 
 ```{r construct placebo data, include=TRUE}
-d <- data.table('fill this in')
+generate_data <- function(assignment, treated, n, turnout) {
+  d <- data.table(id = 1:n) 
+  n_turnout <- round(n * turnout)
+  d[ , assignment := assignment]
+  d[ , treated := treated]
+  d[ , turnout := c(rep(1, n_turnout), rep(0, n - n_turnout))]
+}
+baseline_no     <- generate_data("Baseline", "No", 2463, 0.3008)
+treatment_yes   <- generate_data("Treatment", "Yes", 512, 0.3890)
+treatment_no    <- generate_data("Treatment", "No", 1898, 0.3160)
+placebo_yes     <- generate_data("Placebo", "Yes", 476, 0.3002)
+placebo_no      <- generate_data("Placebo", "No", 2108, 0.3145)
+
+d <- rbindlist(list(
+  baseline_no,
+  treatment_yes,
+  treatment_no,
+  placebo_yes,
+  placebo_no
+))
 ```
+
+```{r}
+head(d)
+```
+
 
 ## Estimate the compliance rate using the treatment group
 Estimate the proportion of compliers by using the data on the treatment group.  Provide a short narrative using inline R code, such as `r inline_reference`.  
 
 ```{r treatment group compliance rate, include=TRUE}
-compliance_rate_t <- 'fill this in'
+#d[assignment=='Treatment' & treated == 'Yes', .N]
+compliance_rate_t <- d[assignment=='Treatment' & treated == 'Yes', .N] / d[assignment=='Treatment', .N]
+compliance_rate_t
 ```
 
-**Answer:** ...
+**Answer:** The complier rate is 0.212 or 21.2%, which tells us that ~21% of the treatment group actually received the treatment.
 
 ## Estimate the compliance rate using the control group
 C. Estimate the proportion of compliers by using the data on the placebo group.  Provide a short narrative using inline R code.
 
 ```{r placebo group compliance rate, include=TRUE}
-compliance_rate_p <- 'fill this in'
+compliance_rate_p <- d[assignment=='Placebo' & treated == 'No', .N] / d[assignment=='Placebo', .N]
+compliance_rate_p
 ```
 
-**Answer:** ...
+**Answer:** he complier rate is 0.816 or 81.6%, which tells us that ~82% of the placebo group actually received the placebo. This is appears to be much higher than the treatment group.
 
 ## Compare these compliance rates
 Are the two compliance rates statistically significantly different from each other? Provide *a test* -- this means that you cannot simply "look at" or "eyeball" the coefficients and infer some conclusion -- and a description about why you chose that particular test, and why you chose that particular set of data. 
 
 ```{r proportions difference, include=TRUE}
-proportions_difference_test <- 'fill this in'
+proportions_difference_test <- prop.test(c(compliance_rate_t, compliance_rate_p), c(d[assignment=='Treatment', .N],d[assignment=='Placebo', .N]),alternative = "two.sided")
+proportions_difference_test
+
 ```
 
-**Answer:** ...
+**Answer:** I chose the prop.test because it can be used for testing the null that the proportions in several groups are the same. I chose the treatment data based on being placed in treatment and receiving treatment, since this shows the proportion of individuals that complied with their assignment. I chose the placebo data base on being placed in placebo and not receiving treatment, since this shows the proportion of individuals that complied with their assignment. With a p-value of 1, we fail to reject the null that the proportions are the same. In other words, the two compliance rates are not statistically significantly different from each other. This suggests that the compliance behavior does not differ meaningfully between the two groups.
 
 ## Evaluate assumptions
 What critical assumption does this comparison of the two groups' compliance rates test? Given what you learn from the test, how do you suggest moving forward with the analysis for this problem? 
 
-**Answer:** ...
+**Answer:** It tests the assumption of monotonicity and random assignment, or that the only difference between the groups is the assignment itself and not other factors that influence compliance. More specifically, it tests whether assignment to treatment affects compliance behavior, and whether compliance in the placebo group reflects what compliance would have looked like in the absence of treatment. Based on the results of the test, which show no evidence of statistically different compliance rates, I would continue forward with the belief that assumptions are met. 
 
 ## Compliers average treatement effect... of the placebo?
 Estimate the CACE of receiving the placebo. Is the estimate consistent with the assumption that the placebo has no effect on turnout?
 
 ```{r cace of placebo, include=TRUE}
-cace_estimate <- 'fill this in'
+#'ITT = E[Y | Z = 1] − E[ Y | Z = 0]' 
+placebo_comply = d[assignment=='Placebo' & treated == 'No', .N] / d[assignment=='Placebo', .N]
+#placebo_comply
+placebo_noncomply = d[assignment=='Placebo' & treated == 'Yes', .N] / d[assignment=='Placebo', .N]
+#placebo_noncomply
+baseline_turnout = d[assignment=='Baseline', mean(turnout)] 
+#baseline_turnout
+placebo_comply_turnout = d[assignment=='Placebo' & treated == 'No', mean(turnout)] 
+#placebo_comply_turnout
+placebo_noncomply_turnout = d[assignment=='Placebo' & treated == 'Yes', mean(turnout)]
+#placebo_noncomply_turnout
+
+placebo_itt <- (placebo_comply_turnout*placebo_comply)+(placebo_noncomply_turnout*placebo_noncomply) - (baseline_turnout)
+cace_estimate <- placebo_itt/placebo_comply
+cace_estimate
 ```
 
-**Answer:** ...
+**Answer:** Yes, given the very small (close to zero) CACE I would say that it meets the assumption that placebo has no effect on turnout.
 
 ## Diference in means estimator
 Using a difference in means (i.e. not a linear model), compute the ITT using the appropriate groups' data. Then, divide this ITT by the appropriate compliance rate to produce an estiamte the CACE.  Provide a short narrative using inline R code.    
 
 ```{r cace through means, include=TRUE}
-itt        <- 'fill this in'
-cace_means <- 'fill this in'  
+treat_comply = d[assignment=='Treatment' & treated == 'Yes', .N] / d[assignment=='Treatment', .N]
+treat_noncomply = d[assignment=='Treatment' & treated == 'No', .N] / d[assignment=='Treatment', .N]
+baseline_turnout = d[assignment=='Baseline', mean(turnout)] 
+treat_comply_turnout = d[assignment=='Treatment' & treated == 'Yes', mean(turnout)] 
+treat_noncomply_turnout = d[assignment=='Treatment' & treated == 'No', mean(turnout)]
+itt        <- (treat_comply_turnout*treat_comply)+(treat_noncomply_turnout*treat_noncomply) - (baseline_turnout)
+cace_means <- itt/treat_comply
+cace_means
 ```
 
-**Answer:** ...
+**Answer:** The CACE is 0.144, which tells us that, of the compliers, receiving encouragement to vote results in ~14% increase in the likelihood of voting as compared to not receiving encouragement.
 
 ## Linear model estimator
 Use two separate linear models to estimate the CACE of receiving the treatment by first estimating the ITT and then dividing by $ITT_{D}$. Use the `coef()` extractor and in line code evaluation to write a descriptive statement about what you learn after your code. 
 
 ```{r itt / d, include=TRUE}
-itt_model   <- 'fill this in'
-itt_d_model <- 'fill this in'
+d[, Assignment_numeric := ifelse(assignment == "Treatment", 1, 0)]
+d[, Treated_numeric := ifelse(treated == "Yes", 1, 0)]
+itt_model   <- lm(turnout ~ assignment, data=d)
+itt_d_model <- lm(Treated_numeric ~ assignment, data=d)
+itt <- coef(itt_model)['assignmentTreatment']
+itt_d <- coef(itt_d_model)['assignmentTreatment']
+itt
+itt_d
+itt/itt_d
 ```
 
-**Answer:** ...
+**Answer:** The CACE is 0.144, which tells us that, of the compliers, receiving encouragement to vote results in ~14% increase in the likelihood of voting as compared to not receiving encouragement.
 
 ## Data subset estimator
 When a design uses a placebo group, one additional way to estiamte the CACE is possible -- subset to include only compliers in the treatment and placebo groups, and then estimate a linear model. Produce that estimate here. Provide a short narrative using inline R code.  
 
 ```{r cace subset, include=TRUE} 
-cace_subset_model <- 'fill this in'
+treat_comply = d[assignment=='Treatment' & treated == 'Yes', ]
+placebo_comply = d[assignment=='Placebo' & treated == 'No', ]
+d_subset = rbind(treat_comply,placebo_comply)
+itt_model   <- lm(turnout ~ assignment, data=d_subset)
+itt_d_model <- lm(Treated_numeric ~ assignment, data=d_subset)
+itt <- coef(itt_model)['assignmentTreatment']
+itt_d <- coef(itt_d_model)['assignmentTreatment']
+cace_subset_model <- itt/itt_d
+cace_subset_model
 ```
 
-**Answer:** ...
+**Answer:** The CACE is 0.0742, which tells us that, of the subset of compliers in treatment and placebo, receiving encouragement to vote results in ~7% increase in the likelihood of voting as compared to not receiving encouragement. This is less than the prior CACEs due to the sub-setting of the data.
 
 ## Evaluate estimators
 In large samples (i.e. "in expectation") when the design is carried out correctly, we have the expectation that the results from 7, 8, and 9 should be the same. Are they? If so, does this give you confidence that these methods are working well. If not, what explains why these estimators are producing different estimates? 
 
-**Answer:** ...
+**Answer:** They are not. 7 & 8 are the same but 9 is different. I believe that they would be providing similar answers if they had similar compliance rates. Given that there is large difference between the compliance rates, by sub-setting on the complier data we are not doing an apples to apples comparison since it would indicate that the compliers in treatment are different from compliers in placebo.

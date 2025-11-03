@@ -13,19 +13,36 @@ Suppose that you want to conduct a study of recycling behavior. A number of unde
 What is the ITT? Do the work to compute it, and store it into the object `recycling_itt`.  Provide a short narrative using inline R code, such as `r inline_reference`.
 
 ```{r recycling itt, include=TRUE} 
-recycling_itt <- 'fill this in'
+'ITT = E[Y | Z = 1] − E[ Y | Z = 0]' 
+group_a = (600/1500)
+#group_a
+group_b = (800/1500)
+#group_b
+group_c = (3000/3000)
+#group_c
+Y_t_a = (500/600)
+#Y_t_a
+Y_t_c = (600/3000)
+#Y_t_c
+#I do not believe we can use the control group percentage for those that were assigned to treatment but received a dose of control.
+#recycling_itt_b <- (Y_t_a*group_a)+(Y_t_c*group_b) - (Y_t_c)
+#recycling_itt_b
+recycling_itt <- (Y_t_a*group_a)+(0*group_b) - (Y_t_c)
+recycling_itt
 ```
 
-**Answer:** ...
+**Answer:** The ITT is 0.133, which tells us that the effect if receiving information about the benefits of recycling results in a 13.3% increase in recycling as compared to not receiving such information. This tells us the treatment effect for treatment/control assignments, regardless of compliance.
 
 ## Compliers average causal effect
 What is the CACE? Do the work to compute it, and store it into the object `recycling_cace`.  Provide a short narrative using inline R code.
 
 ```{r recycling cace, include=TRUE} 
-recycling_cace <- 'fill this in'
+ITT_D = (700/1500)
+recycling_cace <- recycling_itt/ITT_D
+recycling_cace
 ```
 
-**Answer:** ...
+**Answer:** The CACE is 0.286, which tells us that, for compliers, receiving information about recycling resulted in a 51.4% increase in recycling as compared to not receiving the information.
 
 ```{problem_description}
 There appear to be some inconsistencies regarding how the undergraduates actually carried out the instructions they were given. 
@@ -38,19 +55,39 @@ There appear to be some inconsistencies regarding how the undergraduates actuall
 What is the CACE if Mike is correct?  Provide a short narrative using inline R code.
 
 ```{r cace mike, include=TRUE} 
-cace_mike <- 'fill this in'
+'ITT = E[Y | Z = 1] − E[ Y | Z = 0]' 
+group_a = (500/1500)
+group_b = (1000/1500)
+group_c = (3000/3000)
+Y_t_a = (500/500)
+Y_t_c = (600/3000)
+
+recycling_itt <- (Y_t_a*group_a)+(0*group_b) - (Y_t_c)
+ITT_D = (500/1500)
+cace_mike <- recycling_itt/ITT_D
+cace_mike
 ```
 
-**Answer:** ...
+**Answer:** The CACE is 0.4, which tells us that as a result of receiving information on recycling people are 40% more likely to recycle as compared to not receiving this information. This is a ~1.2% increase in effect size as compared to the original numbers.
 
 ## Andy's CACE 
 What is the CACE if Andy is correct? Provide a short narrative using inline R code.
 
 ```{r cace andy, include=TRUE}
-cace_andy <- 'fill this in'
+'ITT = E[Y | Z = 1] − E[ Y | Z = 0]' 
+group_a = (600/1500)
+group_b = (900/1500)
+group_c = (3000/3000)
+Y_t_a = (500/600)
+Y_t_c = (600/3000)
+
+recycling_itt <- (Y_t_a*group_a)+(0*group_b) - (Y_t_c)
+ITT_D = (600/1500)
+cace_andy <- recycling_itt/ITT_D
+cace_andy
 ```
 
-**Answer:** ...
+**Answer:** The CACE is 0.333, which tells us that as a result of receiving information on recycling people are 40% more likely to recycle as compared to not receiving this information. This is a ~0.7% reduction in effect size as compared to the Mike's numbers but still ~0.5% increase from the original numbers.
 
 ```{problem_description}
 For the rest of this question, suppose that **in fact** Mike was telling the truth.  
@@ -59,12 +96,12 @@ For the rest of this question, suppose that **in fact** Mike was telling the tru
 ## Effect of false reporting
 What was the impact of the undergraduates’s false reporting on our estimates of the treatment’s effectiveness?
 
-**Answer:** ...
+**Answer:** The impact was that our CACE estimate was below what the true estimate may be. If we are to believe either mike or andy, then we woul have underestimated the true estimate by ~0.5%-1.2%. 
 
 ## Effect of false reporting... on what quantity?
 Does your answer change depending on whether you choose to focus on the ITT or the CACE?
 
-**Answer:** ...
+**Answer:** The ITT remains the same but CACE changes. Given that we do not have any information on non-compliers for treatment, the ITT is not changed.
 
 
 

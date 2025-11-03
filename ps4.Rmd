@@ -4,8 +4,9 @@ author: "Alex, Micah, Scott, and David"
 date: "12/01/2021"
 output:
   pdf_document:
+    latex_engine: xelatex
     number_sections: yes
-name: YOUR NAME HERE
+name: Steven Lanciotti
 ---
 
 ```{r global options, include = FALSE}

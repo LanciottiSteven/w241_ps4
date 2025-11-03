@@ -22,6 +22,11 @@ d <- data.table::fread(
   nrows = number_of_rows)
 ```
 
+```{r}
+head(d)
+```
+
+
 ```{problem_description}
 (As an aside, you will note that this takes some time to download. One idea is to save a copy locally, rather than continuing to read from the internet. One problem with this idea is that you might be tempted to make changes to this canonical data; changes that would not be reflected if you were to ever pull a new copy from the source tables. One method of dealing with this is proposed by [Cookiecutter data science](https://drivendata.github.io/cookiecutter-data-science/#links-to-related-projects-and-references).)
 
@@ -59,6 +64,11 @@ setnames(
 )
 ```
 
+```{r}
+head(d)
+```
+
+
 ```{r three party labels}
 three_party_labeler <- function(x) { 
   party <- ifelse(
@@ -76,6 +86,21 @@ d[ , three_party := three_party_labeler(party)]
 d[ , treatment_f := factor(treatment)]
 d[ , any_letter  := treatment_f != 'Control' ]
 ```
+
+```{r}
+head(d)
+```
+
+```{r}
+format(d[, .N], big.mark = ',')
+format(d[party == 'DEM' , .N], big.mark = ',')
+d[ , mean(party == 'DEM')] * 100
+format(d[party == 'REP', .N], big.mark = ',')
+d[ , mean(party == 'REP')] * 100
+format(d[!(party %in% c('DEM', 'REP')), .N], big.mark = ',')
+d[ , mean(!(party %in% c('DEM', 'REP')))] * 100
+```
+
 
 ```{problem_description}
 Let us start by showing some of the features about the data. There are `r format(d[, .N], big.mark = ',')` observations. Of these, 
@@ -104,46 +129,95 @@ d %>%
 Load the data and estimate a `lm` model that compares the rates of turnout in the control group to the rate of turnout among anybody who received *any* letter. This model combines all the letters into a single condition -- "treatment" compared to a single condition "control". Report robust standard errors, and include a narrative sentence or two after your code using inline R code, such as `r inline_reference`.  
 
 ```{r effect of receiving a letter, message = FALSE, warning = FALSE} 
-# Use this block for your work
+m1 <- d[,lm(vote~any_letter)]
+m1$vcovHC_ <- vcovHC(m1)
+stargazer(
+  m1, 
+  type = 'text',
+  se=list(sqrt(diag(m1$vcovHC_))), 
+  header=F
+  )
 ```
 
-**Answer:** ...
+**Answer:** The results of this model tells us that the estimated effect of receiving any letter is 0.001, or 0.1% increase to turnout. However, this coefficient is not stat sig and has a SE at a scale that is greater than the coefficient itself.
 
 ## Letter-specific treatment effects
 Suppose that you want to know whether different letters have different effects. To begin, what are the effects of each of the letters, as compared to control? Estimate an appropriate linear model and use robust standard errors. Provide a short narrative using inline R code. 
 
-```{r effect of receiving specific letters, warning = FALSE} 
-
+```{r}
+format(d[, .N], big.mark = ',')
+format(d[vote == 1, .N], big.mark = ',')
+d[ , mean(vote == 1)] * 100
 ```
 
-**Answer:** ...
+
+```{r effect of receiving specific letters, warning = FALSE} 
+m2 <- d[,lm(vote~treatment)]
+m2$vcovHC_ <- vcovHC(m2)
+stargazer(
+  m2, 
+  ci= TRUE, 
+  type = 'text',
+  se=list(sqrt(diag(m2$vcovHC_))), 
+  report = "vcsp",
+  single.row = TRUE,
+  header=F
+  )
+```
+
+**Answer:** The results show varying signs and scales for the coefficients but they all remain stat insignificant with large SE.
 
 ## Test for letter-specific effects 
 Does the increased flexibilitiy of a different treatment effect for each of the letters improve the performance of the model? Test, using an F-test. What does the evidence suggest, and what does this mean about whether there **are** or **are not** different treatment effects for the different letters?
 
 ```{r f-test}
 # anova()
+anova(m1, m2, test = "F")
 ```
 
-**Answer:** ...
+**Answer:** The increased flexibility does not result in any improvement to our model. This suggests that the simpler model provides just as much insight as the other. This further's the evidence that there are no observable treatment effects from the different types of letters received.
 
 ## Compare letter-specific effects 
 Is one message more effective than the others? The authors have drawn up this design as a full-factorial design. Write a *specific* test for the difference between the *Partisan* message and the *Election Info* message. Write a *specific* test for the difference between *Top-Two Info* and the *Election Info* message. Report robust standard errors on both tests and include a short narrative statement after your estimates. 
 
 ```{r specific treatment effects, warning = FALSE}
-
+unique(d[, treatment])
+m3 = d[treatment %in% c('Partisan', 'Election info'), lm(vote ~ treatment)]
+m3$vcovHC_ <- vcovHC(m3)
+stargazer(
+  m3, 
+  ci= TRUE, 
+  type = 'text',
+  se=list(sqrt(diag(m3$vcovHC_))), 
+  report = "vcsp",
+  single.row = TRUE,
+  header=F
+  )
+m4 = d[treatment %in% c('Top-two info','Election info'), lm(vote ~ treatment)]
+m4$vcovHC_ <- vcovHC(m4)
+stargazer(
+  m4, 
+  ci= TRUE, 
+  type = 'text',
+  se=list(sqrt(diag(m4$vcovHC_))), 
+  report = "vcsp",
+  single.row = TRUE,
+  header=F
+  )
 ```
 
-**Answer:** ...
+**Answer:** Based on the results, each of the coefficients tested remain stat insignificant. This tells us that both  "Top-two info" and "Partisan" are not stat sig different or more effective than "election info".
 
 ## Count the number of blocks
 **Blocks? We don't need no stinking blocks?**  The blocks in this data are defined in the `block.num` variable (which you may have renamed). There are a *many* of blocks in this data, none of them are numerical -- they're all category indicators. How many blocks are there? 
 
 ```{r count blocks, include=TRUE}
+length(d[, unique(block)])
+#length(unique(d[, block]))
 
 ```
 
-**Answer:** ...
+**Answer:** There are 283 blocks.
 
 ## Add block fixed effects
 **SAVE YOUR CODE FIRST** but then try to estimate a `lm` that evaluates the effect of receiving *any letter*, and includes this block-level information. What happens? Why do you think this happens? If this estimate *would have worked* (that's a hint that we don't think it will), what would the block fixed effects have accomplished?
@@ -160,18 +234,25 @@ Is one message more effective than the others? The authors have drawn up this de
 ##   - In the first chain of this data.table, we are scoping only to the columns that we will use in the model;
 ##   - In the second, we are estimating the model
 model_block_fx  <- d[ , .(vote, any_letter, block)][ , lm(vote ~ any_letter + factor(block))]
+#summary(model_block_fx)
 ```
 
-**Answer:** ...
+**Answer:** When controling for blocks, the results become too long to review. This happens because the model is controlling for the nearly 300 different blocks, creating estimates for each. This is not good practice, since it can lead to p hacking. If it had worked, what it would tell us is whether the block has any impact on voter turnout.
 
 ## A clever work-around? 
 Even though we can't estimate this fixed effects model directly, we can get the same information and model improvement if we're *just a little bit clever*. Create a new variable that is the *average turnout within a block* and attach this back to the data.table. Use this new variable in a regression that regresses voting on `any_letter` and this new `block_average`. Then, using an F-test, does the increased information from all these blocks improve the performance of the *causal* model? Use an F-test to check. 
 
 ```{r alternate approach}
+d[, block_average := mean(vote, na.rm = TRUE), by = block]
+m5 = d[, lm(vote ~ any_letter + block_average)]
+m5$vcovHC_ <- vcovHC(m5)
+#summary(m5)
+
+anova(m1, m5, test = "F")
 
 ```
 
-**Answer:** ...
+**Answer:** The clever maneuver does us to more easily estimate what we are looking for. The F-test results in stat sig. which tells us that blocks do have an effect on vote turnout and in fact provide us more power in our model.
 
 ## Does cleverness create a bad-control? 
 Doesn't this feel like using a bad-control in your regression? Has the treatment coefficient changed from when you didn't include the `block_average` measure to when you did? Have the standard errors on the treatment coefficient changed from when you didn't include the `block_average` measure to when you did? Why is this OK to do?
@@ -180,10 +261,19 @@ Doesn't this feel like using a bad-control in your regression? Has the treatment
 # stargazer(
 #   fill in with your models
 #   type = 'text'
+stargazer(m1, m5,
+          type = "text",
+          se = list(sqrt(diag(m1$vcovHC_)),sqrt(diag(m5$vcovHC_))),  
+          title = "Treatment Effects With and Without Block Average Controls",
+          column.labels = c("Without Block Average", "With Block Average"),
+          covariate.labels = c("Treatment", "Block Average"),
+          dep.var.labels = "Voted",
+          model.numbers = FALSE,
+          notes = "Robust standard errors in parentheses")
 # )
 ```
 
-**Answer:** ...
+**Answer:** It does kind of feel odd including it as a control, but I'm not sure if I would consider it a bad control just yet. The treatment coefficient has not changed after including the block average and neither has the SE. This is ok to do because this is not a post-treatment variable. Block is also not directly impacted by treatment. Therefore, including this type of variable is ok.
 
 ```{r plot assessing good/bad control, include=FALSE}
 setkeyv(x = d, cols = 'block')

@@ -11,7 +11,10 @@ Suppose that you're advertising a board-game or online game to try and increase 
 - What is the causal quantity that you have **in fact** estimated? 
 - Is there any relationship between the two? Do you think that what you have estimated will be higher, lower, or about the same effect as the causal quantity that you would have liked to estimate?
 
-**Answer:** ...
+**Answer:** 
+- The ideal causal quantity would be the ATE of advertising on an individual on their probability of purchasing the game. That is, how likely an individual is to purchase a game holding their friends unexposed to the game/ad. 
+- Given the scenario, the causal quantity that is in fact estimated is a biased ATE. That is, the treatment effect is conditional on whether an individual has friends in the other group or there is spill over across the groups. Therefore, you would want to take into account friends in the control group and estimate the ATE for treated individuals or the ATT. So the causal quantity estimated will be the ATT of ads on the probability that an individual purchases the game.  
+- There is a relationship between the two given both include individuals from the treatment group. The estimated ATE will likely be smaller given the fact that people in the treatment group will share information with people in the control group, making the control group look more like the treatment group.
 
 ## Bonus time!
 As we're writing this question, end-of-year bonuses are being given out in people's companies. (This is not a concept we your instructors have in the program -- each day with your smiling faces is reward enough -- and who needs money anyways?) 
@@ -23,3 +26,6 @@ Suppose that you're interested in knowing whether this is a good idea from the p
 - Is there any relationship between the two? Do you think that what you have estimated will be higher, lower, or about the same effect as the causal quantity that you would have liked to estimate?
 
 **Answer:** ...
+- The causal quantity that we would like to estimate is the ATE of bonuses on the an individual's productivity.
+- The causal quantity that we have estimated would be a biased ATE of that. We would estimate the ATT of bonuses on individual's productivity for those that received bonuses.
+- Yes there is a relationship. The degree of the difference will depend on the level of spill over, the motivation of the individuals, and the culture of the office. If there is spill over and the control group follows suit in terms of motivation as the treatment group (motivated to work harder or not motivated to work harder) then the estimated value would be lower than what we would have liked. If the spill over results in an opposite effect to motivation/productivity in the control group, then the estimated value will be greater than what we would have liked. 
